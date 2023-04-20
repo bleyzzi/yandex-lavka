@@ -6,3 +6,4 @@ starlette
 flake8
 requests
 httpx
+pydantic
