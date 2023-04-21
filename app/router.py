@@ -4,6 +4,7 @@ from app.models import Courier
 from typing import List, Dict
 
 router = APIRouter()
+lst = List
 
 
 @router.post(
@@ -17,7 +18,7 @@ async def add_couriers_info(couriers: List[Courier]):
     курьер на автомобиле. От типа зависит объем заказов, которые перевозит курьер.
     Районы задаются целыми положительными числами. График работы задается списком строк формата `HH:MM-HH:MM`.
     """
-
+    print(couriers)
     return {"message": "Couriers created successfully"}
 
 
@@ -29,7 +30,7 @@ async def get_single_courier_info():
     """
     Возвращает информацию о курьере
     """
-    pass
+    return lst
 
 
 @router.get(
@@ -41,7 +42,7 @@ async def get_all_couriers_info(offset: int = 0, limit: int = 1):
     Возвращает информацию о всех курьерах
     Имеет поля offset и limit
     """
-    pass
+    return lst
 
 
 @router.post(
