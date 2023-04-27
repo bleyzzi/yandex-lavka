@@ -1,25 +1,30 @@
-from fastapi import APIRouter, Request
+from pydantic.types import List
+from fastapi import APIRouter, Request, Depends
+from sqlalchemy import select, insert
 from starlette import status
-from app.models import Courier
-from typing import List, Dict
+from sqlalchemy.ext.asyncio import AsyncSession
+from src.database import get_async_session
+from src.app.models import courier
+from src.app.schemas import CourierCreate, Courier
 
 router = APIRouter()
-lst = List
 
 
 @router.post(
     "/couriers",
     status_code=status.HTTP_200_OK
 )
-async def add_couriers_info(couriers: List[Courier]):
+async def add_couriers_info(new_courier: CourierCreate, session: AsyncSession = Depends(get_async_session)):
     """
     Обработчик принимает на вход список в формате json с данными о курьерах и графиком их работы.
     Курьеры работают только в заранее определенных районах, а также различаются по типу: пеший, велокурьер и
     курьер на автомобиле. От типа зависит объем заказов, которые перевозит курьер.
     Районы задаются целыми положительными числами. График работы задается списком строк формата `HH:MM-HH:MM`.
     """
-    print(couriers)
-    return {"message": "Couriers created successfully"}
+    stmt = insert(courier).values(**new_courier.dict())
+    await session.execute(stmt)
+    await session.commit()
+    return {"status": "success"}
 
 
 @router.get(
@@ -30,19 +35,22 @@ async def get_single_courier_info():
     """
     Возвращает информацию о курьере
     """
-    return lst
+    pass
 
 
 @router.get(
     "/couriers",
-    status_code = status.HTTP_200_OK
+    status_code = status.HTTP_200_OK,
+    response_model=List[Courier]
 )
-async def get_all_couriers_info(offset: int = 0, limit: int = 1):
+async def get_all_couriers_info(offset: int = 0, limit: int = 1, session: AsyncSession = Depends(get_async_session)):
     """
     Возвращает информацию о всех курьерах
     Имеет поля offset и limit
     """
-    return lst
+    query = select(courier)
+    result = await session.execute(query)
+    return result.all()
 
 
 @router.post(

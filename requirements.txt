@@ -1,9 +1,13 @@
-fastapi
+fastapi~=0.95.1
 uvicorn
-pytest
+pytest~=7.3.1
 pytest-asyncio
-starlette
+starlette~=0.26.1
 flake8
 requests
 httpx
-pydantic
+pydantic~=1.10.7
+python-dotenv~=1.0.0
+sqlalchemy~=2.0.9
+alembic~=1.10.3
+asyncpg

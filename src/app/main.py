@@ -1,10 +1,12 @@
-from app.router import router
+from src.app.router import router
 
 from fastapi import FastAPI
 
 
 def get_application() -> FastAPI:
-    application = FastAPI()
+    application = FastAPI(
+        title="Yandex shop"
+    )
     application.include_router(router)
 
     return application
