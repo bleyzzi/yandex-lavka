@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from datetime import time
 from pydantic import BaseModel
 from enum import Enum
-from sqlalchemy import MetaData, Table, Column, Integer, String, ForeignKey, JSON
+from sqlalchemy import MetaData, Table, Column, Integer, String, ForeignKey, JSON, Identity
 
 
 metadata = MetaData()
@@ -12,7 +12,7 @@ metadata = MetaData()
 courier_type = Table(
     "courier_type",
     metadata,
-    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("id", Integer, primary_key=True),
     Column("type", String, nullable=False)
 )
 
@@ -20,8 +20,8 @@ courier_type = Table(
 courier = Table(
     "courier",
     metadata,
-    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("id", Integer, Identity(start=1, cycle=True), primary_key=True),
     Column("Courier_type", Integer, ForeignKey("courier_type.id")),
-    Column("Regions", String),
-    Column("Working_hours", String)
+    Column("Regions", JSON),
+    Column("Working_hours", JSON)
 )

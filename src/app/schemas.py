@@ -1,11 +1,13 @@
+from datetime import datetime
+from typing import List
+
 from pydantic import BaseModel
 
 
 class CourierCreate(BaseModel):
-    id: int
     Courier_type: int
-    Regions: str
-    Working_hours: str
+    Regions: List[int]
+    Working_hours: List[str]
 
 
 class CourierTypeCreate(BaseModel):
@@ -15,9 +17,9 @@ class CourierTypeCreate(BaseModel):
 
 class Courier(BaseModel):
     id: int
-    Courier_type: int
-    Regions: str
-    Working_hours: str
+    Courier_type: str
+    Regions: List[int]
+    Working_hours: List[str]
 
     class Config:
         orm_mode = True

@@ -29,13 +29,16 @@ async def add_couriers_info(new_courier: CourierCreate, session: AsyncSession = 
 
 @router.get(
     "/couriers/{courier_id}",
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    response_model=List[Courier]
 )
-async def get_single_courier_info():
+async def get_single_courier_info(id_user: int, session: AsyncSession = Depends(get_async_session)):
     """
     Возвращает информацию о курьере
     """
-    pass
+    stmt = select(courier).where(courier.c.id == id_user)
+    result = await session.execute(stmt)
+    return result.all()
 
 
 @router.get(
@@ -48,7 +51,7 @@ async def get_all_couriers_info(offset: int = 0, limit: int = 1, session: AsyncS
     Возвращает информацию о всех курьерах
     Имеет поля offset и limit
     """
-    query = select(courier)
+    query = select(courier).limit(limit).offset(offset)
     result = await session.execute(query)
     return result.all()
 
