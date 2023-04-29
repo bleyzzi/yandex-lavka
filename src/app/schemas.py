@@ -23,3 +23,21 @@ class Courier(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class OrderCreate(BaseModel):
+    Weight: float
+    Region: int
+    Delivery_time: str
+    Cost: float
+
+
+class Order(BaseModel):
+    id: int
+    Weight: float
+    Region: int
+    Delivery_time: str
+    Cost: float
+
+    class Config:
+        orm_mode = True
