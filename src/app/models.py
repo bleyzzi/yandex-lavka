@@ -20,6 +20,7 @@ courier = Table(
     "courier",
     metadata,
     Column("id", Integer, Identity(start=1, cycle=True), primary_key=True),
+    Column("Name", String, nullable=False),
     Column("Courier_type", Integer, ForeignKey("courier_type.id")),
     Column("Regions", JSON),
     Column("Working_hours", JSON)

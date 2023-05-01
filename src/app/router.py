@@ -5,14 +5,16 @@ from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_async_session
 from src.app.models import courier, order
-from src.app.schemas import CourierCreate, Courier, OrderCreate, Order
+from src.app.schemas import CourierCreate, Courier, OrderCreate, Order, ResponseCourier, ResponseOrder
+import json
 
 router = APIRouter()
 
 
 @router.post(
     "/couriers",
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseCourier
 )
 async def add_couriers_info(new_courier: CourierCreate, session: AsyncSession = Depends(get_async_session)):
     """
@@ -24,13 +26,14 @@ async def add_couriers_info(new_courier: CourierCreate, session: AsyncSession = 
     stmt = insert(courier).values(**new_courier.dict())
     await session.execute(stmt)
     await session.commit()
-    return {"status": "success"}
+    ret = ResponseCourier(status="success", data=None, details=None)
+    return ret
 
 
 @router.get(
     "/couriers/{courier_id}",
     status_code=status.HTTP_200_OK,
-    response_model=List[Courier]
+    response_model=ResponseCourier
 )
 async def get_single_courier_info(courier_id: int, session: AsyncSession = Depends(get_async_session)):
     """
@@ -38,13 +41,14 @@ async def get_single_courier_info(courier_id: int, session: AsyncSession = Depen
     """
     stmt = select(courier).where(courier.c.id == courier_id)
     result = await session.execute(stmt)
-    return result.all()
+    ret = ResponseCourier(status="success", data=result.all(), details=None)
+    return ret
 
 
 @router.get(
     "/couriers",
     status_code=status.HTTP_200_OK,
-    response_model=List[Courier]
+    response_model=ResponseCourier
 )
 async def get_all_couriers_info(offset: int = 0, limit: int = 1, session: AsyncSession = Depends(get_async_session)):
     """
@@ -53,12 +57,14 @@ async def get_all_couriers_info(offset: int = 0, limit: int = 1, session: AsyncS
     """
     stmt = select(courier).limit(limit).offset(offset)
     result = await session.execute(stmt)
-    return result.all()
+    ret = ResponseCourier(status="success", data=result.all(), details=None)
+    return ret
 
 
 @router.post(
     "/orders",
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseCourier
 )
 async def add_orders_info(new_order: OrderCreate, session: AsyncSession = Depends(get_async_session)):
     """
@@ -68,13 +74,14 @@ async def add_orders_info(new_order: OrderCreate, session: AsyncSession = Depend
     stmt = insert(order).values(**new_order.dict())
     await session.execute(stmt)
     await session.commit()
-    return {"status": "success"}
+    ret = ResponseOrder(status="success", data=None, details=None)
+    return ret
 
 
 @router.get(
     "/orders/{order_id}",
     status_code=status.HTTP_200_OK,
-    response_model=List[Order]
+    response_model=ResponseOrder
 )
 async def get_single_order_info(order_id: int, session: AsyncSession = Depends(get_async_session)):
     """
@@ -83,13 +90,14 @@ async def get_single_order_info(order_id: int, session: AsyncSession = Depends(g
     """
     stmt = select(order).where(order.c.id == order_id)
     result = await session.execute(stmt)
-    return result.all()
+    ret = ResponseOrder(status="success", data=result.all(), details=None)
+    return ret
 
 
 @router.get(
     "/orders",
     status_code=status.HTTP_200_OK,
-    response_model=List[Order]
+    response_model=ResponseOrder
 )
 async def get_all_orders_info(offset: int = 0, limit: int = 1, session: AsyncSession = Depends(get_async_session)):
     """
@@ -98,7 +106,8 @@ async def get_all_orders_info(offset: int = 0, limit: int = 1, session: AsyncSes
     """
     stmt = select(order).limit(limit).offset(offset)
     result = await session.execute(stmt)
-    return result.all()
+    ret = ResponseOrder(status="success", data=result.all(), details=None)
+    return ret
 
 
 @router.post(
