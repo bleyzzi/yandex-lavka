@@ -44,5 +44,6 @@ confirm_order = Table(
     Column("id", Integer, Identity(start=1, cycle=True), primary_key=True),
     Column("Courier_id", Integer, ForeignKey("courier.id")),
     Column("Order_id", Integer, ForeignKey("order.id")),
+    Column("Time", String),
     Column("Status", String)
 )

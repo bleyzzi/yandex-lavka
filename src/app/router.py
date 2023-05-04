@@ -1,11 +1,12 @@
 from pydantic.types import List
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
 from sqlalchemy import select, insert
 from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_async_session
-from src.app.models import courier, order
-from src.app.schemas import CourierCreate, Courier, OrderCreate, Order, ResponseCourier, ResponseOrder
+from src.app.models import courier, order, confirm_order
+from src.app.schemas import CourierCreate, OrderCreate, ResponseCourier, ResponseOrder, RequestConfirmOrderCreate, \
+    ResponseConfirmOrder
 import json
 
 router = APIRouter()
@@ -26,7 +27,7 @@ async def add_couriers_info(new_courier: CourierCreate, session: AsyncSession = 
     stmt = insert(courier).values(**new_courier.dict())
     await session.execute(stmt)
     await session.commit()
-    ret = ResponseCourier(status="success", data=None, details=None)
+    ret = ResponseCourier(status=status.HTTP_200_OK, data=None, details=None)
     return ret
 
 
@@ -41,7 +42,7 @@ async def get_single_courier_info(courier_id: int, session: AsyncSession = Depen
     """
     stmt = select(courier).where(courier.c.id == courier_id)
     result = await session.execute(stmt)
-    ret = ResponseCourier(status="success", data=result.all(), details=None)
+    ret = ResponseCourier(status=status.HTTP_200_OK, data=result.all(), details=None)
     return ret
 
 
@@ -57,7 +58,7 @@ async def get_all_couriers_info(offset: int = 0, limit: int = 1, session: AsyncS
     """
     stmt = select(courier).limit(limit).offset(offset)
     result = await session.execute(stmt)
-    ret = ResponseCourier(status="success", data=result.all(), details=None)
+    ret = ResponseCourier(status=status.HTTP_200_OK, data=result.all(), details=None)
     return ret
 
 
@@ -74,7 +75,7 @@ async def add_orders_info(new_order: OrderCreate, session: AsyncSession = Depend
     stmt = insert(order).values(**new_order.dict())
     await session.execute(stmt)
     await session.commit()
-    ret = ResponseOrder(status="success", data=None, details=None)
+    ret = ResponseOrder(status=status.HTTP_200_OK, data=None, details=None)
     return ret
 
 
@@ -90,7 +91,7 @@ async def get_single_order_info(order_id: int, session: AsyncSession = Depends(g
     """
     stmt = select(order).where(order.c.id == order_id)
     result = await session.execute(stmt)
-    ret = ResponseOrder(status="success", data=result.all(), details=None)
+    ret = ResponseOrder(status=status.HTTP_200_OK, data=result.all(), details=None)
     return ret
 
 
@@ -106,16 +107,21 @@ async def get_all_orders_info(offset: int = 0, limit: int = 1, session: AsyncSes
     """
     stmt = select(order).limit(limit).offset(offset)
     result = await session.execute(stmt)
-    ret = ResponseOrder(status="success", data=result.all(), details=None)
+    ret = ResponseOrder(status=status.HTTP_200_OK, data=result.all(), details=None)
     return ret
 
 
 @router.post(
     "/orders/complete",
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseConfirmOrder
 )
-async def confirm_order():
-    """
-    Принимает массив объектов, состоящий из трех полей: id курьера, id заказа и время выполнения заказа, после отмечает, что заказ выполнен.
-    """
-    pass
+async def add_confirm_order(new_order: RequestConfirmOrderCreate, session: AsyncSession = Depends(get_async_session)):
+    try:
+        stmt = insert(confirm_order).values(**new_order.dict())
+        await session.execute(stmt)
+        await session.commit()
+    except Exception:
+        raise HTTPException(status_code=400)
+    ret = ResponseConfirmOrder(status=status.HTTP_200_OK, data=None, details=None)
+    return ret

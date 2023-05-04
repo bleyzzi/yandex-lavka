@@ -85,3 +85,33 @@ class ResponseOrder(BaseModel):
     class Config:
         allow_population_by_field_name = True
         orm_mode = True
+
+
+class RequestConfirmOrderCreate(BaseModel):
+    Courier_id: int
+    Order_id: int
+    Time: str
+    Status: str
+
+    class Config:
+        allow_population_by_field_name = True
+        orm_mode = True
+
+        schema_extra = {
+            "example": {
+                "Courier_id": 1,
+                "Order_id": 1,
+                "Time": "13:00",
+                "Status": "success"
+            }
+        }
+
+
+class ResponseConfirmOrder(BaseModel):
+    status: str
+    data: Optional[List[RequestConfirmOrderCreate]] = None
+    details: Optional[str] = None
+
+    class Config:
+        allow_population_by_field_name = True
+        orm_mode = True
