@@ -144,21 +144,26 @@ async def get_courier_rating(start_date: str, end_date: str, courier_id: int,
     coefficient = {1: 2,
                    2: 3,
                    3: 4}
+    rating = None
+    salary = 0
     stmt = select(confirm_order.c.Courier_id,
                   confirm_order.c.Order_id,
                   confirm_order.c.Time,
                   confirm_order.c.Status) \
-        .select_from(confirm_order)
+        .select_from(confirm_order).where(confirm_order.c.Courier_id == courier_id)
     result = await session.execute(stmt)
-    lst = list(result.all()[0])
-    print(lst)
-    stmt = select(courier.c.Courier_type) \
-        .select_from(courier). \
-        where(courier.c.id == lst[0])
-    result = await session.execute(stmt)
-    courier_type = list(result.all()[0])
-    print(courier_type)
-    rating = None
-    salary = None
+    for elem_list in result.all():
+        order_info_list = list(elem_list)
+        print(order_info_list)
+        if order_info_list[3] == 'success':
+            stmt = select(courier.c.Name, courier.c.Courier_type) \
+                .select_from(courier). \
+                where(courier.c.id == order_info_list[0])
+            result = await session.execute(stmt)
+            courier_type = list(result.all()[0])[1]
+            stmt = select(order.c.Cost).select_from(order).where(order.c.id == order_info_list[1])
+            result = await session.execute(stmt)
+            cost = list(result.all()[0])[0]
+            salary += coefficient[courier_type] * cost
     ret = ResponseRatingSalary(status=status.HTTP_200_OK, data=RatingSalary(rating=rating, salary=salary), details=None)
     return ret
