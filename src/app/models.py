@@ -1,9 +1,5 @@
-from typing import List, Dict
-from fastapi import FastAPI
-from datetime import time
-from pydantic import BaseModel
-from enum import Enum
 from sqlalchemy import MetaData, Table, Column, Integer, String, ForeignKey, JSON, Identity, Float
+from sqlalchemy.sql.schema import Sequence
 
 metadata = MetaData()
 
@@ -41,9 +37,9 @@ order = Table(
 confirm_order = Table(
     "confirm_order",
     metadata,
-    Column("id", Integer, Identity(start=1, cycle=True), primary_key=True),
+    Column("id", Integer, Sequence("confirm_order_id_seq", metadata=metadata, start=1), primary_key=True),
     Column("Courier_id", Integer, ForeignKey("courier.id")),
-    Column("Order_id", Integer, ForeignKey("order.id")),
+    Column("Order_id", Integer, ForeignKey("order.id"), index=True, unique=True),
     Column("Time", String),
     Column("Status", String)
 )

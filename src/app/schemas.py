@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel
+from datetime import datetime
 
 
 class CourierCreate(BaseModel):
@@ -107,6 +108,11 @@ class RequestConfirmOrderCreate(BaseModel):
         }
 
 
+class RequestRatingSalary(BaseModel):
+    start_date: datetime
+    end_date: datetime
+
+
 class ResponseConfirmOrder(BaseModel):
     status: str
     data: Optional[List[RequestConfirmOrderCreate]] = None
@@ -115,3 +121,24 @@ class ResponseConfirmOrder(BaseModel):
     class Config:
         allow_population_by_field_name = True
         orm_mode = True
+
+
+class RatingSalary(BaseModel):
+    rating: Optional[float] = None
+    salary: Optional[float] = None
+
+    class Config:
+        allow_population_by_field_name = True
+        orm_mode = True
+
+
+class ResponseRatingSalary(BaseModel):
+    status: str
+    data: Optional[RatingSalary] = None
+    details: Optional[str] = None
+
+    class Config:
+        allow_population_by_field_name = True
+        orm_mode = True
+
+

@@ -1,13 +1,13 @@
-from pydantic.types import List
-from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, insert
 from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_async_session
 from src.app.models import courier, order, confirm_order
 from src.app.schemas import CourierCreate, OrderCreate, ResponseCourier, ResponseOrder, RequestConfirmOrderCreate, \
-    ResponseConfirmOrder
-import json
+    ResponseConfirmOrder, ResponseRatingSalary, RatingSalary, RequestRatingSalary
+from sqlalchemy.exc import DatabaseError, IntegrityError
+from datetime import datetime
 
 router = APIRouter()
 
@@ -121,7 +121,44 @@ async def add_confirm_order(new_order: RequestConfirmOrderCreate, session: Async
         stmt = insert(confirm_order).values(**new_order.dict())
         await session.execute(stmt)
         await session.commit()
-    except Exception:
+    except IntegrityError:
+        await session.rollback()
         raise HTTPException(status_code=400)
+    finally:
+        await session.close()
     ret = ResponseConfirmOrder(status=status.HTTP_200_OK, data=None, details=None)
+    return ret
+
+
+@router.get(
+    "/couriers/meta-info/{courier_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=ResponseRatingSalary
+)
+async def get_courier_rating(start_date: str, end_date: str, courier_id: int,
+                             session: AsyncSession = Depends(get_async_session)):
+    # try:
+    # print(datetime.strptime(start_date, "%d/%m/%y %H:%M"))
+    # print(datetime.strptime(end_date, "%d/%m/%y %H:%M"))
+    # print(datetime.strptime(end_date, "%d/%m/%y %H:%M") - datetime.strptime(start_date, "%d/%m/%y %H:%M"))
+    coefficient = {1: 2,
+                   2: 3,
+                   3: 4}
+    stmt = select(confirm_order.c.Courier_id,
+                  confirm_order.c.Order_id,
+                  confirm_order.c.Time,
+                  confirm_order.c.Status) \
+        .select_from(confirm_order)
+    result = await session.execute(stmt)
+    lst = list(result.all()[0])
+    print(lst)
+    stmt = select(courier.c.Courier_type) \
+        .select_from(courier). \
+        where(courier.c.id == lst[0])
+    result = await session.execute(stmt)
+    courier_type = list(result.all()[0])
+    print(courier_type)
+    rating = None
+    salary = None
+    ret = ResponseRatingSalary(status=status.HTTP_200_OK, data=RatingSalary(rating=rating, salary=salary), details=None)
     return ret
