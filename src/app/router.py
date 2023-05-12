@@ -2,20 +2,30 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, insert
 from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.app.handlers import select_courier_info_from_courier, \
+    select_confirm_order_info_from_confirm_order, select_cost_from_order
 from src.database import get_async_session
 from src.app.models import courier, order, confirm_order
 from src.app.schemas import CourierCreate, OrderCreate, ResponseCourier, ResponseOrder, RequestConfirmOrderCreate, \
-    ResponseConfirmOrder, ResponseRatingSalary, RatingSalary, RequestRatingSalary
-from sqlalchemy.exc import DatabaseError, IntegrityError
-from datetime import datetime
+    ResponseConfirmOrder, ResponseRatingSalary, RatingSalary
+from sqlalchemy.exc import IntegrityError
+from fastapi_limiter.depends import RateLimiter
+
+
+def get_rate_limiter(requests: int, seconds: int):
+    return RateLimiter(times=requests, seconds=seconds)
+
 
 router = APIRouter()
+rate_limiter = get_rate_limiter(requests=10, seconds=60)
 
 
 @router.post(
     "/couriers",
     status_code=status.HTTP_200_OK,
-    response_model=ResponseCourier
+    response_model=ResponseCourier,
+    dependencies=[Depends(rate_limiter)]
 )
 async def add_couriers_info(new_courier: CourierCreate, session: AsyncSession = Depends(get_async_session)):
     """
@@ -100,15 +110,18 @@ async def get_single_order_info(order_id: int, session: AsyncSession = Depends(g
     status_code=status.HTTP_200_OK,
     response_model=ResponseOrder
 )
-async def get_all_orders_info(offset: int = 0, limit: int = 1, session: AsyncSession = Depends(get_async_session)):
+async def getOrders(offset: int = 0, limit: int = 1, session: AsyncSession = Depends(get_async_session)):
     """
     Возвращает информацию о всех заказах, а также их дополнительную информацию: вес заказа, район доставки, промежутки времени, в которые удобно принять заказ.
     Имеет поля offset и limit
     """
-    stmt = select(order).limit(limit).offset(offset)
-    result = await session.execute(stmt)
-    ret = ResponseOrder(status=status.HTTP_200_OK, data=result.all(), details=None)
-    return ret
+    try:
+        stmt = select(order).limit(limit).offset(offset)
+        result = await session.execute(stmt)
+        ret = ResponseOrder(status=status.HTTP_200_OK, data=result.all(), details=None)
+        return ret
+    except IntegrityError:
+        return HTTPException(status_code=400)
 
 
 @router.post(
@@ -141,29 +154,26 @@ async def get_courier_rating(start_date: str, end_date: str, courier_id: int,
     # print(datetime.strptime(start_date, "%d/%m/%y %H:%M"))
     # print(datetime.strptime(end_date, "%d/%m/%y %H:%M"))
     # print(datetime.strptime(end_date, "%d/%m/%y %H:%M") - datetime.strptime(start_date, "%d/%m/%y %H:%M"))
-    coefficient = {1: 2,
-                   2: 3,
-                   3: 4}
+    coefficient_salary = {1: 2,
+                          2: 3,
+                          3: 4}
+    coefficient_rating = {1: 3,
+                          2: 2,
+                          3: 1}
     rating = None
     salary = 0
-    stmt = select(confirm_order.c.Courier_id,
-                  confirm_order.c.Order_id,
-                  confirm_order.c.Time,
-                  confirm_order.c.Status) \
-        .select_from(confirm_order).where(confirm_order.c.Courier_id == courier_id)
-    result = await session.execute(stmt)
+    result = await select_confirm_order_info_from_confirm_order(courier_id, session)
     for elem_list in result.all():
         order_info_list = list(elem_list)
-        print(order_info_list)
         if order_info_list[3] == 'success':
-            stmt = select(courier.c.Name, courier.c.Courier_type) \
-                .select_from(courier). \
-                where(courier.c.id == order_info_list[0])
-            result = await session.execute(stmt)
-            courier_type = list(result.all()[0])[1]
-            stmt = select(order.c.Cost).select_from(order).where(order.c.id == order_info_list[1])
-            result = await session.execute(stmt)
+            current_courier_id = int(order_info_list[0])
+            result = await select_courier_info_from_courier(current_courier_id, session)
+            courier_info = list(result.all()[0])
+            courier_type = courier_info[1]
+            current_order_id = int(order_info_list[1])
+            result = await select_cost_from_order(current_order_id, session)
             cost = list(result.all()[0])[0]
-            salary += coefficient[courier_type] * cost
+            salary += coefficient_salary[courier_type] * cost
+
     ret = ResponseRatingSalary(status=status.HTTP_200_OK, data=RatingSalary(rating=rating, salary=salary), details=None)
     return ret
