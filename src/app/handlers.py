@@ -1,8 +1,8 @@
 from sqlalchemy import select
 
-from src.app.models import confirm_order, courier, order
+from src.app.models import courier, order
 
-
+'''
 async def select_confirm_order_info_from_confirm_order(courier_id, session):
     stmt = select(confirm_order.c.Courier_id,
                   confirm_order.c.Order_id,
@@ -25,3 +25,4 @@ async def select_cost_from_order(current_order_id, session):
     stmt = select(order.c.Cost).select_from(order).where(order.c.id == int(current_order_id))
     result = await session.execute(stmt)
     return result
+'''
