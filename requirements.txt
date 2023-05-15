@@ -11,5 +11,4 @@ python-dotenv~=1.0.0
 sqlalchemy~=2.0.9
 alembic~=1.10.3
 asyncpg
-fastapi_limiter
 slowapi

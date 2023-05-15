@@ -1,5 +1,4 @@
-from sqlalchemy import MetaData, Table, Column, Integer, String, ForeignKey, JSON, Identity, Float, DateTime
-from sqlalchemy.sql.schema import Sequence
+from sqlalchemy import MetaData, Table, Column, Integer, String, JSON, Identity, Float, DateTime
 
 metadata = MetaData()
 
@@ -22,5 +21,6 @@ order = Table(
     Column("regions", Integer),
     Column("weight", Float),
     Column("completed_time", DateTime, default=None),
+    Column("courier_delivers_id", Integer, default=None)
 )
 
