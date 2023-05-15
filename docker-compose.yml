@@ -1,25 +1,30 @@
-version: '3.9'
+version: "3.9"
+
 services:
-  application:
-    build: .
-    env_file:
-      - .env
+  app:
     container_name: app
-    restart: always
-    command: ["./script.sh"]
+    build: .
     ports:
       - "8080:8080"
+    restart: always
     depends_on:
+      - db
+    links:
       - db
     networks:
       - enrollment
 
+
   db:
+    container_name: db
     image: postgres:15.2-alpine
-    container_name: database
-    env_file:
-      - .env
+    environment:
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "password"
     restart: always
+    ports:
+      - "5432:5432"
     networks:
       - enrollment
 

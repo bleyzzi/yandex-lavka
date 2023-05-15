@@ -1,14 +1,11 @@
 from datetime import datetime
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, insert, update
-from starlette import status
 from sqlalchemy.ext.asyncio import AsyncSession
-from database import get_async_session
+from app.database.database import get_async_session
 
-from app.models import courier, order
-from app.schemas.couriers import *
+from app.database.models import order
 from app.schemas.orders import *
 router = APIRouter()
 
@@ -86,7 +83,13 @@ async def get_all_orders_info(offset: int = 0, limit: int = 1, session: AsyncSes
     Имеет поля offset и limit
     """
     try:
-        stmt = select(order).limit(limit).offset(offset)
+        stmt = select(order.c.cost,
+                      order.c.delivery_hours,
+                      order.c.order_id,
+                      order.c.regions,
+                      order.c.weight,
+                      order.c.completed_time).\
+            limit(limit).offset(offset)
         result = await session.execute(stmt)
         return result.mappings().all()
     except Exception:
@@ -99,8 +102,11 @@ async def get_all_orders_info(offset: int = 0, limit: int = 1, session: AsyncSes
 )
 async def add_confirm_order(new_confirm_order: RequestConfirmOrder, session: AsyncSession = Depends(get_async_session)):
     try:
+        response = list()
         for elem in new_confirm_order.complete_info:
-            dtm = elem.complete_time
+            dtmm = datetime.utcnow()
+            chng = datetime.strftime(dtmm.date(), "%y-%m-%d") + " " + elem.complete_time
+            dtm = datetime.strptime(chng, "%y-%m-%d %H:%M")
             courier_id = elem.courier_id
             order_id = elem.order_id
             stmt = select(order.c.order_id, order.c.completed_time, order.c.courier_delivers_id).\
@@ -108,9 +114,25 @@ async def add_confirm_order(new_confirm_order: RequestConfirmOrder, session: Asy
                 where(order.c.order_id == order_id)
             result = await session.execute(stmt)
             lst = result.mappings().all()[0]
-            if lst["completed_time"] is None and lst["courier_delivers_id"] == courier_id:
+            if lst["courier_delivers_id"] is None:
+                # Временная заглушка
+                stmt = update(order).where(order.c.order_id == order_id).values(courier_delivers_id=courier_id)
+                await session.execute(stmt)
+                await session.commit()
+            if lst["completed_time"] is None:# and lst["courier_delivers_id"] == courier_id:
                 stmt = update(order).where(order.c.order_id == order_id).values(completed_time=dtm)
                 await session.execute(stmt)
                 await session.commit()
+                stmt = select(order.c.cost,
+                              order.c.delivery_hours,
+                              order.c.order_id,
+                              order.c.regions,
+                              order.c.weight,
+                              order.c.completed_time).\
+                    select_from(order).\
+                    where(order.c.order_id == order_id)
+                result = await session.execute(stmt)
+                response.extend(result.mappings().all())
+        return response
     except Exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
