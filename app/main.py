@@ -9,7 +9,7 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.database.database import init_models
 
-limiter = Limiter(key_func=get_remote_address, application_limits=["10/second"], key_style="endpoint")
+# limiter = Limiter(key_func=get_remote_address, application_limits=["10/second"], key_style="endpoint")
 
 
 def get_application() -> FastAPI:
@@ -22,9 +22,9 @@ def get_application() -> FastAPI:
 
 
 app = get_application()
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-app.add_middleware(SlowAPIMiddleware)
+# app.state.limiter = limiter
+# app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+# app.add_middleware(SlowAPIMiddleware)
 
 
 @app.on_event("startup")

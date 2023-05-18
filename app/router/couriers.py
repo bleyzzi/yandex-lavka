@@ -24,25 +24,22 @@ async def add_couriers_info(new_courier: CourierCreate, session: AsyncSession = 
     Районы задаются целыми положительными числами
     График работы задается списком строк формата `HH:MM-HH:MM`
     """
-    # try:
-    response = ResponseCourierCreate(couriers=[])
-    for cour in new_courier:
-        for elem in list(cour)[1]:
-            stmt = insert(courier).values(**elem.dict())
-            await session.execute(stmt)
-            await session.commit()
-            stmt = select(courier).order_by(courier.c.courier_id.desc()).limit(1)
-            result = await session.execute(stmt)
-            dct = result.mappings().all()[0]
-            courier_id = dct["courier_id"]
-            courier_type = dct["courier_type"]
-            regions = dct["regions"]
-            working_hours = dct["working_hours"]
-            response.couriers.append(ResponseCourierWithId(courier_id=courier_id, courier_type=courier_type,
-                                                           regions=regions, working_hours=working_hours))
-    return response
-    # except Exception:
-    #    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+    try:
+        response = ResponseCourierCreate(couriers=[])
+        for cour in new_courier:
+            for elem in list(cour)[1]:
+                stmt = insert(courier).values(**elem.dict())
+                await session.execute(stmt)
+                await session.commit()
+                stmt = select(courier).order_by(courier.c.courier_id.desc()).limit(1)
+                result = await session.execute(stmt)
+                dct = result.mappings().all()[0]
+                courier_id, courier_type, regions, working_hours = dct.values()
+                response.couriers.append(ResponseCourierWithId(courier_id=courier_id, courier_type=courier_type,
+                                                               regions=regions, working_hours=working_hours))
+        return response
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @router.get(

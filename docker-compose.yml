@@ -6,7 +6,6 @@ services:
     build: .
     ports:
       - "8080:8080"
-    restart: always
     depends_on:
       - db
     links:
@@ -22,9 +21,20 @@ services:
       POSTGRES_DB: "postgres"
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "password"
-    restart: always
     ports:
       - "5432:5432"
+    networks:
+      - enrollment
+
+  db_test:
+    container_name: db_test
+    image: postgres:15.2-alpine
+    environment:
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "password"
+    ports:
+      - "6000:6000"
     networks:
       - enrollment
 
