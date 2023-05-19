@@ -36,11 +36,13 @@ class Order(BaseModel):
     def weight_match(cls, v):
         if type(v) != float:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Вес должен быть числом")
+        return v
 
     @validator('regions')
     def regions_match(cls, v):
         if type(v) != int or not v >= 1:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Регион должен быть целым числом")
+        return v
 
 
 class OrderCreate(BaseModel):
@@ -72,7 +74,6 @@ class ConfirmOrder(BaseModel):
         reg = r'[0-2][0-9]:[0-5][0-9]'
         if not bool(re.search(reg, v)):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Проверьте введенное время")
-
         return v
 
 
