@@ -1,6 +1,5 @@
 import pytest
-import warnings
-from tests.examples import *
+from tests.examples import AddCorrectRequestCourier, AddIncorrectRequestCourier
 from tests.conftest import client
 
 
