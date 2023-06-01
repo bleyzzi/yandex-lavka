@@ -7,3 +7,4 @@ dev.env
 dev-docker-compose.yml
 deploy/.cache/
 **/logs
+.env
